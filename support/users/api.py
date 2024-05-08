@@ -6,9 +6,9 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, serializers
 
 from .enums import Role
-from .models import User # noqa
+from .models import User  # noqa
 
-User = get_user_model() # noqa
+User = get_user_model()  # noqa
 
 
 @csrf_exempt
