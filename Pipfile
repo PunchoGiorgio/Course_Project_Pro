@@ -4,13 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "*"
-python-decouple = "*"
-psycopg2 = "*"
 mysqlclient = "==2.1.1"
-djangorestframework-simplejwt = {version = "~=5.3.1", extra = ["crypto"]}
-djangorestframework = "*"
+requests = "*"
 django = "*"
+djangorestframework = "*"
+psycopg2 = "*"
+python-decouple = "*"
+djangorestframework-simplejwt = {version="~=5.3.1", extra=["crypto"]}
 
 [dev-packages]
 black = "*"
