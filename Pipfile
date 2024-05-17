@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+mysqlclient = "==2.1.1"
+requests = "*"
+django = "*"
+djangorestframework = "*"
+djangorestframework-simplejwt = {version="~=5.3.1", extra=["crypto"]}
+psycopg2 = "*"
+python-decouple = "*"
+
+[dev-packages]
+black = "*"
+isort = "*"
+ruff = "*"
+flake8 = "*"
+
+[requires]
+python_version = "3.11"
