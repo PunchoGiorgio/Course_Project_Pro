@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path
-from issues.api import IssuesAPI, IssuesDeleteAPI, IssuesRetrieveAPI, IssuesUpdateAPI
+from issues.api import (IssuesAPI, IssuesDeleteAPI, IssuesRetrieveAPI,  # noqa
+                        IssuesUpdateAPI)
 from rest_framework_simplejwt.views import TokenObtainPairView  # noqa
 from rest_framework_simplejwt.views import token_obtain_pair  # noqa
 from users.api import UserListCreateAPI, UsersDeleteAPI, UsersRetrieveUpdateAPI
