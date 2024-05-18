@@ -6,6 +6,12 @@ from .enums import Status
 from .models import Issue
 
 
+class IsAdminSeniorUser(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        return request.user.is_staff or request.user.role == "senior"
+
+
 class IssueSerializer(serializers.ModelSerializer):
     status = serializers.IntegerField(required=False)
     junior = serializers.HiddenField(default=serializers.CurrentUserDefault())
@@ -58,7 +64,7 @@ class IssuesRetrieveAPI(generics.RetrieveAPIView):
 class IssuesUpdateAPI(generics.UpdateAPIView):
     http_method_names = ["put"]
     serializer_class = IssueSerializer
-    permission_classes = [permissions.IsAdminSeniorUser]
+    permission_classes = [IsAdminSeniorUser]
     queryset = Issue.objects.all()
     lookup_url_kwarg = "id"
 
