@@ -1,60 +1,85 @@
-import json
-
 from django.contrib.auth import get_user_model
-from django.http import HttpRequest, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import generics, serializers
+from django.contrib.auth.hashers import make_password
+from rest_framework import generics, permissions, serializers, status
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from users.enums import Role
 
-from .enums import Role
-from .models import User  # noqa
-
-User = get_user_model()  # noqa
-
-
-@csrf_exempt
-def create_user(request: HttpRequest) -> JsonResponse:
-    if request.method != "POST":
-        raise NotImplementedError("Only POST requests")
-
-    data: dict = json.loads(request.body)
-    user = User.objects.create_user(**data)
-
-    results = {
-        "id": user.id,
-        "email": user.email,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "role": user.role,
-        "is_active": user.is_active,
-    }
-
-    return JsonResponse(results)
+User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    status = serializers.IntegerField(required=False)
-    junior = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
     class Meta:
         model = User
         fields = "__all__"
 
 
-class UsersAPI(generics.ListCreateAPIView):
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["email", "password", "first_name", "last_name", "role"]
 
-    serializer_class = UserSerializer
+    def validate_role(self, value: str) -> str:
+        if value not in Role.users():
+            raise ValidationError(
+                f"Selected role must be in {Role.users_values()}",
+            )
+        return value
+
+    def validate(self, attrs: dict) -> dict:
+        """Change the password for its hash"""
+
+        attrs["password"] = make_password(attrs["password"])
+
+        return attrs
+
+
+class UserRegistrationPublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["email", "first_name", "last_name", "role"]
+
+
+class UserListCreateAPI(generics.ListCreateAPIView):
+    http_method_names = ["get", "post"]
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         return User.objects.all()
 
     def post(self, request):
-        if request.user.role == Role.SENIOR:
-            raise Exception("The role is Senior")
-        return super().post(request)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        return Response(
+            UserRegistrationPublicSerializer(serializer.validated_data).data,
+            status=status.HTTP_201_CREATED,
+            headers=self.get_success_headers(serializer.data),
+        )
+
+    def get(self, request):
+        queryset = self.get_queryset()
+        serializer = UserSerializer(queryset)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+            headers=self.get_success_headers(serializer.data),
+        )
 
 
-class UsersRetrieveUpdateDeleteAPI(generics.RetrieveUpdateDestroyAPIView):
+class UsersRetrieveUpdateAPI(generics.RetrieveUpdateAPIView):
     http_method_names = ["get", "put"]
     serializer_class = UserSerializer
+    queryset = User.objects.all()
+    lookup_url_kwarg = "id"
+
+
+class UsersDeleteAPI(generics.RetrieveUpdateDestroyAPIView):
+    http_method_names = ["delete"]
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
     queryset = User.objects.all()
     lookup_url_kwarg = "id"
